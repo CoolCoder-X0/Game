@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Me Baby - A Love Adventure</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #2a0e61;
+            color: #fff;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #ff4d88;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .intro {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn {
+            background-color: #ff4d88;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #ff69b4;
+            transform: scale(1.05);
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: #4a2886;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 77, 136, 0.3);
+            display: none;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .game-ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .heart {
+            color: #ff4d88;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        #win-screen, #game-over {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
+        
+        .message-container {
+            background-color: rgba(74, 40, 134, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 80%;
+            box-shadow: 0 0 20px rgba(255, 77, 136, 0.5);
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.7;
+            transition: transform 1s ease-out, top 1s ease-out, opacity 1s ease-out;
+        }
+        
+        /* Controls overlay */
+        #controls-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .level-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 24px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Get Me Baby <span class="heart">❤️</span></h1>
+        
+        <div class="intro" id="intro-screen">
+            <p>Help Abhi navigate through obstacles to reach his soulmate Sneha!</p>
+            <p>Will your love triumph over all challenges?</p>
+            <button class="btn" id="start-btn">Start Game</button>
+        </div>
+        
+        <div id="game-container">
+            <canvas id="game-canvas"></canvas>
+            <div class="game-ui" id="game-ui">Hearts: <span id="hearts">3</span> | Level: <span id="level">1</span></div>
+            <div class="level-message" id="level-message">Level 1</div>
+            <div id="controls-overlay">Controls: ← → to move, ↑ to jump</div>
+            
+            <div id="win-screen">
+                <div class="message-container">
+                    <h2>Love Conquers All! <span class="heart">❤️</span></h2>
+                    <p>Abhi and Sneha are finally together!</p>
+                    <p>Their love story will continue forever...</p>
+                    <p class="message">
+                        From countless obstacles overcome to the sweetest reunion,<br>
+                        Just like in this game, I'll always find my way to you.<br>
+                        No mountain too high, no river too wide,<br>
+                        With you by my side, I feel alive.
+                    </p>
+                    <button class="btn" id="play-again">Play Again</button>
+                </div>
+            </div>
+            
+            <div id="game-over">
+                <div class="message-container">
+                    <h2>Don't Give Up!</h2>
+                    <p>True love is worth fighting for!</p>
+                    <button class="btn" id="try-again">Try Again</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Created with love, just for you ❤️</p>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let game;
+        const startBtn = document.getElementById('start-btn');
+        const playAgainBtn = document.getElementById('play-again');
+        const tryAgainBtn = document.getElementById('try-again');
+        const gameContainer = document.getElementById('game-container');
+        const introScreen = document.getElementById('intro-screen');
+        const winScreen = document.getElementById('win-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const levelMessage = document.getElementById('level-message');
+        const heartsDisplay = document.getElementById('hearts');
+        const levelDisplay = document.getElementById('level');
+        
+        // Start game when button is clicked
+        startBtn.addEventListener('click', function() {
+            introScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            startGame();
+        });
+        
+        playAgainBtn.addEventListener('click', function() {
+            winScreen.style.display = 'none';
+            startGame();
+        });
+        
+        tryAgainBtn.addEventListener('click', function() {
+            gameOverScreen.style.display = 'none';
+            startGame();
+        });
+        
+        function startGame() {
+            game = new Game();
+            game.start();
+        }
+        
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = 800;
+                this.canvas.height = 500;
+                this.player = null;
+                this.platforms = [];
+                this.obstacles = [];
+                this.collectibles = [];
+                this.goal = null;
+                this.hearts = 3;
+                this.level = 1;
+                this.maxLevel = 3;
+                this.gravity = 0.5;
+                this.keys = {};
+                this.gameOver = false;
+                this.gameWon = false;
+                this.levelComplete = false;
+                
+                // Event listeners for keyboard controls
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+                
+                // For mobile - add touch controls if needed
+                this.setupTouchControls();
+            }
+            
+            start() {
+                this.hearts = 3;
+                this.level = 1;
+                heartsDisplay.textContent = this.hearts;
+                levelDisplay.textContent = this.level;
+                this.gameOver = false;
+                this.gameWon = false;
+                this.loadLevel(this.level);
+                this.gameLoop();
+                this.showLevelMessage();
+            }
+            
+            showLevelMessage() {
+                levelMessage.textContent = `Level ${this.level}`;
+                levelMessage.style.opacity = '1';
+                setTimeout(() => {
+                    levelMessage.style.opacity = '0';
+                }, 2000);
+            }
+            
+            handleKeyDown(e) {
+                this.keys[e.key] = true;
+            }
+            
+            handleKeyUp(e) {
+                this.keys[e.key] = false;
+            }
+            
+            setupTouchControls() {
+                // For mobile, would implement touch controls here
+            }
+            
+            loadLevel(level) {
+                this.platforms = [];
+                this.obstacles = [];
+                this.collectibles = [];
+                
+                switch(level) {
+                    case 1:
+                        // First level - simple platforms
+                        this.player = new Player(50, 300);
+                        
+                        // Ground
+                        this.platforms.push(new Platform(0, 450, 800, 50));
+                        
+                        // Platforms
+                        this.platforms.push(new Platform(200, 350, 100, 20));
+                        this.platforms.push(new Platform(400, 300, 100, 20));
+                        this.platforms.push(new Platform(600, 250, 100, 20));
+                        
+                        // Collectibles (hearts)
+                        this.collectibles.push(new Collectible(250, 300));
+                        this.collectibles.push(new Collectible(450, 250));
+                        
+                        // Goal (Sneha)
+                        this.goal = new Goal(700, 200);
+                        break;
+                        
+                    case 2:
+                        // Second level - more complex with obstacles
+                        this.player = new Player(50, 200);
+                        
+                        // Ground with gaps
+                        this.platforms.push(new Platform(0, 450, 250, 50));
+                        this.platforms.push(new Platform(350, 450, 200, 50));
+                        this.platforms.push(new Platform(650, 450, 150, 50));
+                        
+                        // Platforms
+                        this.platforms.push(new Platform(150, 350, 80, 20));
+                        this.platforms.push(new Platform(300, 280, 80, 20));
+                        this.platforms.push(new Platform(450, 350, 80, 20));
+                        this.platforms.push(new Platform(600, 280, 80, 20));
+                        
+                        // Obstacles (spikes)
+                        this.obstacles.push(new Obstacle(290, 430, 40, 20));
+                        this.obstacles.push(new Obstacle(580, 430, 40, 20));
+                        
+                        // Collectibles
+                        this.collectibles.push(new Collectible(200, 300));
+                        this.collectibles.push(new Collectible(500, 300));
+                        
+                        // Goal
+                        this.goal = new Goal(700, 230);
+                        break;
+                        
+                    case 3:
+                        // Third level - hardest with moving platforms
+                        this.player = new Player(50, 100);
+                        
+                        // Sparse ground platforms
+                        this.platforms.push(new Platform(0, 450, 150, 50));
+                        this.platforms.push(new Platform(650, 450, 150, 50));
+                        
+                        // Platforms with some moving
+                        this.platforms.push(new Platform(200, 400, 80, 20, true, 200, 400, 'horizontal'));
+                        this.platforms.push(new Platform(350, 350, 80, 20));
+                        this.platforms.push(new Platform(500, 300, 80, 20, true, 250, 350, 'vertical'));
+                        this.platforms.push(new Platform(650, 250, 80, 20));
+                        
+                        // Obstacles
+                        this.obstacles.push(new Obstacle(200, 430, 400, 20));
+                        this.obstacles.push(new Obstacle(400, 330, 40, 20));
+                        
+                        // Collectibles
+                        this.collectibles.push(new Collectible(350, 300));
+                        this.collectibles.push(new Collectible(650, 200));
+                        
+                        // Goal - Sneha waiting on the final platform
+                        this.goal = new Goal(700, 200);
+                        break;
+                }
+            }
+            
+            update() {
+                if (this.gameOver || this.gameWon) return;
+                
+                if (this.levelComplete) {
+                    this.level++;
+                    if (this.level > this.maxLevel) {
+                        this.gameWon = true;
+                        winScreen.style.display = 'flex';
+                        this.startConfetti();
+                        return;
+                    }
+                    this.loadLevel(this.level);
+                    levelDisplay.textContent = this.level;
+                    this.levelComplete = false;
+                    this.showLevelMessage();
+                    return;
+                }
+                
+                this.player.update(this.keys, this.platforms, this.gravity);
+                
+                // Check player falling off the bottom
+                if (this.player.y > this.canvas.height) {
+                    this.loseHeart();
+                }
+                
+                // Update moving platforms
+                this.platforms.forEach(platform => {
+                    if (platform.isMoving) {
+                        platform.update();
+                    }
+                });
+                
+                // Check collision with obstacles
+                this.obstacles.forEach(obstacle => {
+                    if (this.checkCollision(this.player, obstacle)) {
+                        this.loseHeart();
+                    }
+                });
+                
+                // Check collectibles
+                for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                    if (this.checkCollision(this.player, this.collectibles[i])) {
+                        // Collect heart
+                        if (this.hearts < 5) this.hearts++;
+                        heartsDisplay.textContent = this.hearts;
+                        this.collectibles.splice(i, 1);
+                    }
+                }
+                
+                // Check if player reached the goal
+                if (this.goal && this.checkCollision(this.player, this.goal)) {
+                    this.levelComplete = true;
+                }
+            }
+            
+            loseHeart() {
+                this.hearts--;
+                heartsDisplay.textContent = this.hearts;
+                if (this.hearts <= 0) {
+                    this.gameOver = true;
+                    gameOverScreen.style.display = 'flex';
+                } else {
+                    // Reset player position but don't reload level
+                    this.player.x = 50;
+                    this.player.y = 300;
+                    this.player.velocityX = 0;
+                    this.player.velocityY = 0;
+                }
+            }
+            
+            checkCollision(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw background
+                this.drawBackground();
+                
+                // Draw platforms
+                this.platforms.forEach(platform => platform.draw(this.ctx));
+                
+                // Draw obstacles
+                this.obstacles.forEach(obstacle => obstacle.draw(this.ctx));
+                
+                // Draw collectibles
+                this.collectibles.forEach(collectible => collectible.draw(this.ctx));
+                
+                // Draw goal
+                if (this.goal) this.goal.draw(this.ctx);
+                
+                // Draw player
+                this.player.draw(this.ctx);
+            }
+            
+            drawBackground() {
+                // A simple gradient background
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, '#2a0e61');
+                gradient.addColorStop(1, '#4a2886');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Add some stars
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * this.canvas.width;
+                    const y = Math.random() * this.canvas.height;
+                    const size = Math.random() * 2 + 1;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.draw();
+                
+                // Request next frame
+                if (!this.gameOver && !this.gameWon) {
+                    requestAnimationFrame(() => this.gameLoop());
+                }
+            }
+            
+            startConfetti() {
+                for (let i = 0; i < 100; i++) {
+                    this.createConfetti();
+                }
+            }
+            
+            createConfetti() {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random position
+                const startX = Math.random() * window.innerWidth;
+                const startY = -20;
+                
+                // Random color
+                const colors = ['#ff4d88', '#ffb6c1', '#ffd1dc', '#c9184a', '#ff758f', '#590d22', '#ffccd5'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random size
+                const size = Math.random() * 8 + 5;
+                
+                // Style the confetti
+                confetti.style.left = `${startX}px`;
+                confetti.style.top = `${startY}px`;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                
+                document.body.appendChild(confetti);
+                
+                // Animate
+                setTimeout(() => {
+                    confetti.style.top = `${window.innerHeight + 100}px`;
+                    confetti.style.left = `${startX + (Math.random() * 200 - 100)}px`;
+                    confetti.style.opacity = '0';
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        document.body.removeChild(confetti);
+                    }, 2000);
+                }, 0);
+            }
+        }
+        
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 50;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.speed = 5;
+                this.jumpForce = 12;
+                this.isJumping = false;
+                this.color = '#ff4d88';
+                this.name = "Abhi";
+                this.facingRight = true;
+            }
+            
+            update(keys, platforms, gravity) {
+                // Apply gravity
+                this.velocityY += gravity;
+                
+                // Horizontal movement
+                if (keys['ArrowLeft'] || keys['a']) {
+                    this.velocityX = -this.speed;
+                    this.facingRight = false;
+                } else if (keys['ArrowRight'] || keys['d']) {
+                    this.velocityX = this.speed;
+                    this.facingRight = true;
+                } else {
+                    this.velocityX = 0;
+                }
+                
+                // Jumping
+                if ((keys['ArrowUp'] || keys['w'] || keys[' ']) && !this.isJumping) {
+                    this.velocityY = -this.jumpForce;
+                    this.isJumping = true;
+                }
+                
+                // Update position
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                
+                // Check platform collisions
+                this.isJumping = true;
+                platforms.forEach(platform => {
+                    if (this.velocityY > 0 && // Moving downward
+                        this.x + this.width > platform.x &&
+                        this.x < platform.x + platform.width &&
+                        this.y + this.height >= platform.y &&
+                        this.y + this.height <= platform.y + platform.height/2) {
+                        
+                        this.y = platform.y - this.height;
+                        this.velocityY = 0;
+                        this.isJumping = false;
+                    }
+                });
+                
+                // Boundary checks
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > 800) this.x = 800 - this.width;
+            }
+            
+            draw(ctx) {
+                // Draw player body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Draw player face
+                ctx.fillStyle = 'white';
+                
+                // Eyes
+                if (this.facingRight) {
+                    ctx.fillRect(this.x + 20, this.y + 10, 5, 5);
+                } else {
+                    ctx.fillRect(this.x + 5, this.y + 10, 5, 5);
+                }
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + 25, 5, 0, Math.PI);
+                ctx.stroke();
+                
+                // Draw name
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, this.x + this.width/2, this.y - 5);
+            }
+        }
+        
+        class Platform {
+            constructor(x, y, width, height, isMoving = false, min = 0, max = 0, direction = 'horizontal') {
+                this.x = x;
+                this.y = y;
+                this.initialX = x;
+                this.initialY = y;
+                this.width = width;
+                this.height = height;
+                this.isMoving = isMoving;
+                this.min = min;
+                this.max = max;
+                this.direction = direction;
+                this.speed = 1.5;
+                this.movingForward = true;
+            }
+            
+            update() {
+                if (this.direction === 'horizontal') {
+                    if (this.movingForward) {
+                        this.x += this.speed;
+                        if (this.x >= this.max) {
+                            this.movingForward = false;
+                        }
+                    } else {
+                        this.x -= this.speed;
+                        if (this.x <= this.min) {
+                            this.movingForward = true;
+                        }
+                    }
+                } else if (this.direction === 'vertical') {
+                    if (this.movingForward) {
+                        this.y += this.speed;
+                        if (this.y >= this.max) {
+                            this.movingForward = false;
+                        }
+                    } else {
+                        this.y -= this.speed;
+                        if (this.y <= this.min) {
+                            this.movingForward = true;
+                        }
+                    }
+                }
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = '#8b5cf6';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Add some decoration to moving platforms
+                if (this.isMoving) {
+                    ctx.fillStyle = '#c4b5fd';
+                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, 3);
+                }
+            }
+        }
+        
+        class Obstacle {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = '#ff3333';
+            }
+            
+            draw(ctx) {
+                // Draw spikes
+                ctx.fillStyle = this.color;
+                
+                // Create spike pattern
+                const spikes = Math.floor(this.width / 10);
+                for (let i = 0; i < spikes; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + i * 10, this.y + this.height);
+                    ctx.lineTo(this.x + i * 10 + 5, this.y);
+                    ctx.lineTo(this.x + i * 10 + 10, this.y + this.height);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        class Collectible {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 20;
+                this.height = 20;
+                this.color = '#ff4d88';
+                this.animate = 0;
+            }
+            
+            draw(ctx) {
+                // Draw heart
+                this.animate += 0.05;
+                const pulse = 1 + Math.sin(this.animate) * 0.1;
+                
+                ctx.save();
+                ctx.translate(this.x + 10, this.y + 10);
+                ctx.scale(pulse, pulse);
+                
+                ctx.fillStyle = this.color;
+                // Heart shape
+                ctx.beginPath();
+                ctx.moveTo(0, 4);
+                ctx.bezierCurveTo(-10, -8, -15, 8, 0, 15);
+                ctx.bezierCurveTo(15, 8, 10, -8, 0, 4);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        class Goal {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 50;
+                this.color = '#ff69b4';
+                this.name = "Sneha";
+                this.animate = 0;
+            }
+            
+            draw(ctx) {
+                // Animate a subtle hover effect
+                this.animate += 0.05;
+                const hover = Math.sin(this.animate) * 3;
+                
+                // Draw Sneha
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y + hover, this.width, this.height);
+                
+                // Face
+                ctx.fillStyle = 'white';
+                ctx.fillRect(this.x + 10, this.y + hover + 10, 5, 5);
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + hover + 25, 5, 0, Math.PI);
+                ctx.stroke();
+                
+                // Name
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, this.x + this.width/2, this.y + hover - 5);
+                
+                // Draw heart above
+                ctx.fillStyle = '#ff4d88';
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width/2, this.y + hover - 20);
+                ctx.bezierCurveTo(this.x + this.width/2 - 10, this.y + hover - 30, 
+                                 this.x + this.width/2 - 15, this.y + hover - 15, 
+                                 this.x + this.width/2, this.y + hover - 10);
+                ctx.bezierCurveTo(this.x + this.width/2 + 15, this.y + hover - 15, 
+                                 this.x + this.width/2 + 10, this.y + hover - 30, 
+                                 this.x + this.width/2, this.y + hover - 20);
+                ctx.fill();
+            }
+        }
+    </script>
+</body>
+</html>
